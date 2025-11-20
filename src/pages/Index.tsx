@@ -1,15 +1,73 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import Icon from "@/components/ui/icon";
 import { useState } from "react";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("home");
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const scrollToSection = (sectionId: string) => {
     setActiveSection(sectionId);
     const element = document.getElementById(sectionId);
     element?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('https://functions.poehali.dev/721d0e41-ac8a-470e-82dc-b8666f1497b8', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Заявка отправлена!",
+          description: "Мы свяжемся с вами в течение 24 часов",
+        });
+        setFormData({ name: '', email: '', phone: '', message: '' });
+      } else {
+        toast({
+          title: "Ошибка",
+          description: data.error || "Не удалось отправить заявку",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Проблема с подключением к серверу",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const services = [
@@ -244,32 +302,71 @@ const Index = () => {
           </p>
           <Card className="border-0 shadow-lg">
             <CardContent className="p-8">
-              <div className="flex flex-col gap-6">
-                <div className="flex items-center gap-4 p-4 bg-muted rounded-lg hover-scale">
-                  <Icon name="Mail" size={24} className="text-primary" />
-                  <div className="text-left">
-                    <p className="font-semibold text-secondary">Email</p>
-                    <p className="text-muted-foreground">hello@mobiledev.studio</p>
-                  </div>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Имя *</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    placeholder="Ваше имя"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                  />
                 </div>
-                <div className="flex items-center gap-4 p-4 bg-muted rounded-lg hover-scale">
-                  <Icon name="Phone" size={24} className="text-primary" />
-                  <div className="text-left">
-                    <p className="font-semibold text-secondary">Телефон</p>
-                    <p className="text-muted-foreground">+7 (495) 123-45-67</p>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email *</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                  />
                 </div>
-                <div className="flex items-center gap-4 p-4 bg-muted rounded-lg hover-scale">
-                  <Icon name="MapPin" size={24} className="text-primary" />
-                  <div className="text-left">
-                    <p className="font-semibold text-secondary">Офис</p>
-                    <p className="text-muted-foreground">Москва, Пресненская наб., 12</p>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Телефон</Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    placeholder="+7 (999) 123-45-67"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="message">Сообщение *</Label>
+                  <Textarea
+                    id="message"
+                    name="message"
+                    placeholder="Расскажите о вашем проекте..."
+                    value={formData.message}
+                    onChange={handleInputChange}
+                    rows={4}
+                    required
+                  />
+                </div>
+                <Button type="submit" size="lg" className="w-full hover-scale" disabled={isSubmitting}>
+                  {isSubmitting ? "Отправка..." : "Отправить заявку"}
+                </Button>
+              </form>
+              <div className="flex flex-col gap-4 mt-8 pt-8 border-t">
+                <div className="flex items-center gap-3">
+                  <Icon name="Mail" size={20} className="text-primary" />
+                  <span className="text-sm text-muted-foreground">hello@mobiledev.studio</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Icon name="Phone" size={20} className="text-primary" />
+                  <span className="text-sm text-muted-foreground">+7 (495) 123-45-67</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Icon name="MapPin" size={20} className="text-primary" />
+                  <span className="text-sm text-muted-foreground">Москва, Пресненская наб., 12</span>
                 </div>
               </div>
-              <Button size="lg" className="w-full mt-6 hover-scale">
-                Отправить заявку
-              </Button>
             </CardContent>
           </Card>
         </div>
